@@ -64,6 +64,92 @@ class ProductsRepository {
     });
   }
 
+  Future<void> updateProduct({
+    required int id,
+    required String sku,
+    required String nombre,
+    String? descripcion,
+    int? precioCentavos,
+    int? stockMinimo,
+  }) async {
+    final normalizedSku = _normalizeSku(sku);
+    final cleanNombre = nombre.trim();
+
+    if (cleanNombre.isEmpty) {
+      throw ArgumentError.value(nombre, 'nombre', 'El nombre es obligatorio');
+    }
+    if (stockMinimo != null) {
+      _requireNonNegative(stockMinimo, 'stockMinimo');
+    }
+    if (precioCentavos != null) {
+      _requireNonNegative(precioCentavos, 'precioCentavos');
+    }
+
+    return _db.transaction(() async {
+      final existingProduct = await (_db.select(_db.products)
+            ..where((p) => p.id.equals(id))
+            ..limit(1))
+          .getSingleOrNull();
+
+      if (existingProduct == null) {
+        throw ProductNotFoundException(id);
+      }
+
+      // Check if another product already has this SKU
+      final skuOwner = await (_db.select(_db.products)
+            ..where((p) => p.sku.equals(normalizedSku) & p.id.isNotValue(id))
+            ..limit(1))
+          .getSingleOrNull();
+
+      if (skuOwner != null) {
+        throw DuplicateSkuException(normalizedSku);
+      }
+
+      await (_db.update(_db.products)..where((p) => p.id.equals(id))).write(
+        ProductsCompanion(
+          sku: Value(normalizedSku),
+          nombre: Value(cleanNombre),
+          descripcion: Value(descripcion),
+          precioCentavos: Value(precioCentavos),
+          stockMinimo: stockMinimo != null ? Value(stockMinimo) : const Value.absent(),
+        ),
+      );
+    });
+  }
+
+  Future<void> deleteProduct(int id) async {
+    return _db.transaction(() async {
+      final product = await (_db.select(_db.products)
+            ..where((p) => p.id.equals(id))
+            ..limit(1))
+          .getSingleOrNull();
+
+      if (product == null) {
+        throw ProductNotFoundException(id);
+      }
+
+      final movements = await (_db.select(_db.stockMovements)
+            ..where((m) => m.productId.equals(id)))
+          .get();
+
+      // Rule: Can delete if no movements, or only 1 movement which is stockInicial
+      if (movements.isNotEmpty) {
+        if (movements.length > 1 || movements.first.motivo != MovementReason.stockInicial) {
+          throw ProductHasMovementsException(id);
+        }
+      }
+
+      // Delete movements if any (stockInicial)
+      if (movements.isNotEmpty) {
+        await (_db.delete(_db.stockMovements)..where((m) => m.productId.equals(id))).go();
+      }
+
+      // Delete product
+      await (_db.delete(_db.products)..where((p) => p.id.equals(id))).go();
+    });
+  }
+
+
   static String _normalizeSku(String sku) => sku.trim().toUpperCase();
 
   static void _requireNonNegative(int value, String name) {
