@@ -25,6 +25,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const StockFlowApp());
+    await tester.pumpAndSettle();
 
     await tester.tap(navLabel('Productos'));
     await tester.pumpAndSettle();

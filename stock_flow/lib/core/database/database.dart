@@ -21,5 +21,11 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
-  static QueryExecutor _openConnection() => driftDatabase(name: 'stock_flow');
+  static QueryExecutor _openConnection() => driftDatabase(
+        name: 'stock_flow',
+        web: DriftWebOptions(
+          sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+          driftWorker: Uri.parse('drift_worker.js'),
+        ),
+      );
 }
