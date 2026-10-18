@@ -61,4 +61,33 @@ void main() {
     expect(find.text('Stock: 2'), findsOneWidget);
     expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
   });
+
+  testWidgets('Al tocar un producto abre el detalle', (tester) async {
+    final memoryDb = AppDatabase(
+      DatabaseConnection(
+        NativeDatabase.memory(),
+        closeStreamsSynchronously: true,
+      ),
+    );
+    addTearDown(memoryDb.close);
+
+    final repo = ProductsRepository(memoryDb);
+    await repo.createProduct(sku: 'SKU-1', nombre: 'Manzana');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(memoryDb),
+        ],
+        child: const MaterialApp(home: ProductsScreen()),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Manzana'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Detalle de producto'), findsOneWidget);
+  });
 }

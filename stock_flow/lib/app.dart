@@ -5,11 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/app_shell.dart';
 
 class StockFlowApp extends StatelessWidget {
-  const StockFlowApp({super.key});
+  const StockFlowApp({super.key, this.overrides = const []});
+
+  final List<Override> overrides;
 
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
+      overrides: overrides,
       child: MaterialApp(
         title: 'StockFlow',
         locale: const Locale('es'),

@@ -64,7 +64,6 @@ void main() {
     await tester.tap(find.text('Crear Producto'));
     await tester.pumpAndSettle();
 
-    final repo = ProductsRepository(memoryDb);
     final products = await memoryDb.select(memoryDb.products).get();
     expect(products.length, 1);
     expect(products.first.sku, 'ABC-123');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
+import 'product_detail_screen.dart';
 import 'product_form_screen.dart';
 
 class ProductsScreen extends ConsumerWidget {
@@ -74,8 +75,11 @@ class ProductsScreen extends ConsumerWidget {
                   ],
                 ),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Seleccionado: ${product.nombre}')),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ProductDetailScreen(productId: product.id),
+                    ),
                   );
                 },
               );
