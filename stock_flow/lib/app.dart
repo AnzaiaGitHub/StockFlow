@@ -15,6 +15,7 @@ class StockFlowApp extends StatelessWidget {
       overrides: overrides,
       child: MaterialApp(
         title: 'StockFlow',
+        debugShowCheckedModeBanner: false,
         locale: const Locale('es'),
         supportedLocales: const [Locale('es')],
         localizationsDelegates: const [
